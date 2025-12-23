@@ -30,10 +30,12 @@ int map[BOARD_NUM][BOARD_NUM];
 int score = 0;
 int max_score = 0;
 
-int x_l = WIN_WIDTH * 3 / 4;
+int x_l_esc = WIN_WIDTH * 3 / 4;
 int y_t = UP_BORDER * 7 / 16;
-int x_r = x_l + 70;
+int x_r_esc = x_l_esc + 70;
 int y_d = UP_BORDER * 9 / 16;
+int x_l_restart = WIN_WIDTH / 4;
+int x_r_restart = x_l_restart + 70;
 
 enum Color {
 	z = RGB(194, 166, 101),
@@ -102,14 +104,26 @@ void drawback() {
 	setlinecolor(BLACK);
 	setlinestyle(PS_SOLID,3);
 	setfillcolor(BROWN);
-	fillrectangle(x_l,y_t,x_r,y_d);
+	fillrectangle(x_l_esc,y_t,x_r_esc,y_d);
 	settextstyle(20, 0, "黑体");
 	settextcolor(WHITE);
 	char text_esc[20] = "";
 	sprintf_s(text_esc, "退出");
 	int text_esc_w = textwidth(text_esc);
 	int text_esc_h = textheight(text_esc);
-	outtextxy(x_l + (x_r - x_l) / 2 - text_esc_w / 2, y_t + (y_d - y_t) / 2 - text_esc_h / 2, text_esc);
+	outtextxy(x_l_esc + (x_r_esc - x_l_esc) / 2 - text_esc_w / 2, y_t + (y_d - y_t) / 2 - text_esc_h / 2, text_esc);
+
+	setlinecolor(BLACK);
+	setlinestyle(PS_SOLID, 3);
+	setfillcolor(BROWN);
+	fillrectangle(x_l_restart, y_t, x_r_restart, y_d);
+	settextstyle(20, 0, "黑体");
+	settextcolor(WHITE);
+	char text_restart[20] = "";
+	sprintf_s(text_restart, "重开");
+	int text_restart_w = textwidth(text_restart);
+	int text_restart_h = textheight(text_restart);
+	outtextxy(x_l_restart + (x_r_restart - x_l_restart) / 2 - text_restart_w / 2, y_t + (y_d - y_t) / 2 - text_restart_h / 2, text_restart);
 	
 	for (int i = 0;i < BOARD_NUM;i++) {
 		for (int j = 0;j < BOARD_NUM;j++) {
@@ -383,39 +397,45 @@ int main() {
 			}
 		}*/
 
-		//退出程序
+		
 		ExMessage msg;
 		if (peekmessage(&msg, EM_MOUSE)) {
 			if (msg.message == WM_LBUTTONDOWN) {
-				if (msg.x >= x_l && msg.x <= x_r && msg.y >= y_t && msg.y <= y_d) {
+				if (msg.x >= x_l_esc && msg.x <= x_r_esc && msg.y >= y_t && msg.y <= y_d) { //退出程序
 					closegraph();
 					mciSendString("close bgm", 0, 0, 0);
 					exit(0);
+				}
+				else if (msg.x >= x_l_restart && msg.x <= x_r_restart && msg.y >= y_t && msg.y <= y_d) { //重开一局
+					score = 0;
+					initmap();
+					drawback();
+					FlushBatchDraw();
 				}
 			}
 		}
 
 		bool is_changed = false;
 		DWORD now_keytime = GetTickCount();
-		if (GetAsyncKeyState(VK_UP) & 0x8000) {
+		if ((GetAsyncKeyState(VK_UP) & 0x8000) || (GetAsyncKeyState('W') & 0x8000)) {
 			if (now_keytime - last_keytime >= Interval) {
 				is_changed = moveup();
 				last_keytime = now_keytime;
 			}
 		}
-		else if (GetAsyncKeyState(VK_DOWN) & 0x8000) {
+		else if ((GetAsyncKeyState(VK_DOWN) & 0x8000) || (GetAsyncKeyState('S') & 0x8000)) {
 			if (now_keytime - last_keytime >= Interval) {
 				is_changed = movedown();
 				last_keytime = now_keytime;
 			}
 		}
-		else if (GetAsyncKeyState(VK_LEFT) & 0x8000) {
+		else if ((GetAsyncKeyState(VK_LEFT) & 0x8000) || (GetAsyncKeyState('A') & 0x8000)) {
 			if (now_keytime - last_keytime >= Interval) {
 				is_changed = moveleft();
 				last_keytime = now_keytime;
 			}
 		}
-		else if (GetAsyncKeyState(VK_RIGHT) & 0x8000) {
+		else if ((GetAsyncKeyState(VK_RIGHT) & 0x8000) || (GetAsyncKeyState('D') & 0x8000)) {
 			if (now_keytime - last_keytime >= Interval) {
 				is_changed = moveright();
 				last_keytime = now_keytime;
