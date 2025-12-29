@@ -26,6 +26,8 @@
 #define INIT_X 50
 #define INIT_Y 200
 
+#define SCORE_FILE "max_score.dat"
+
 int map[BOARD_NUM][BOARD_NUM];
 int score = 0;
 int max_score = 0;
@@ -53,6 +55,27 @@ enum Color {
 	b = RGB(153, 130, 76),
 };
 Color arr[13] = { z,tt1,tt2,tt3,tt4,tt5,tt6,tt7,tt8,tt9,tt10,tt11,b };
+
+void loadmaxscore() {
+	FILE* file = NULL;
+	errno_t err = fopen_s(&file, SCORE_FILE, "rb");
+	if (err == 0 && file != NULL) {
+		fread(&max_score, sizeof(int), 1, file);
+		fclose(file);
+	}
+	else {
+		max_score = 0;
+	}
+}
+
+void savemaxscore() {
+	FILE* file = NULL;
+	errno_t err = fopen_s(&file, SCORE_FILE, "wb");
+	if (err == 0 && file != NULL) {
+		fwrite(&max_score, sizeof(int), 1, file);
+		fclose(file);
+	}
+}
 
 int randnum() {
 	
@@ -376,6 +399,8 @@ int main() {
 
 	srand((unsigned int)time(NULL) + clock());
 
+	loadmaxscore();
+
 	initgraph(WIN_WIDTH, WIN_HEIGHT/*,SHOWCONSOLE*/);
 	BeginBatchDraw();
 
@@ -402,11 +427,16 @@ int main() {
 		if (peekmessage(&msg, EM_MOUSE)) {
 			if (msg.message == WM_LBUTTONDOWN) {
 				if (msg.x >= x_l_esc && msg.x <= x_r_esc && msg.y >= y_t && msg.y <= y_d) { //退出程序
+					savemaxscore();
 					closegraph();
 					mciSendString("close bgm", 0, 0, 0);
 					exit(0);
 				}
 				else if (msg.x >= x_l_restart && msg.x <= x_r_restart && msg.y >= y_t && msg.y <= y_d) { //重开一局
+					if (score > max_score) {
+						max_score = score;
+						savemaxscore();
+					}
 					score = 0;
 					initmap();
 					drawback();
@@ -442,7 +472,11 @@ int main() {
 			}
 		}
 
-		max_score = (max_score > score) ? max_score : score;
+		//max_score = (max_score > score) ? max_score : score;
+		if (score > max_score) {
+			max_score = score;
+			savemaxscore();
+		}
 		
 		if (is_changed) {
 			generaterand();
@@ -452,6 +486,10 @@ int main() {
 				char text[50] = "";
 				sprintf_s(text, "恭喜你成功合成了2048，本次分数为%d，按OK再来一次吧", score);
 				MessageBox(hnd, text, "结束", MB_OK);
+				if (score > max_score) {
+					max_score = score;
+					savemaxscore();
+				}
 				score = 0;
 				initmap();
 			}
@@ -461,6 +499,10 @@ int main() {
 				char text[50] = "";
 				sprintf_s(text, "格子被填满了，本次分数为%d，按OK再来一次吧", score);
 				MessageBox(hnd, text, "结束", MB_OK);
+				if (score > max_score) {
+					max_score = score;
+					savemaxscore();
+				}
 				score = 0;
 				initmap();
 			}
@@ -476,6 +518,9 @@ int main() {
 	//}
 	
 	//getchar();
+
+	savemaxscore();
+
 	EndBatchDraw();
 	closegraph();
 }
